@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Maven Project') {
+            steps {
+                sh "mvn clean install"
+            }
+        }
+
+        stage('Copy & Start Remote App') {
+            steps {
+                sh """
+                    scp -o StrictHostKeyChecking=no target/myapp-1.0-SNAPSHOT.jar ubuntu@13.203.76.32:/home/ubuntu/myapp/;
+                    ssh -o StrictHostKeyChecking=no ubuntu@13.203.76.32 'bash /home/ubuntu/myapp/start.sh';
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment Successful!"
+        }
+        failure {
+            echo "Deployment Failed!"
+        }
+    }
+}
